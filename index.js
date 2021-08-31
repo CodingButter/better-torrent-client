@@ -7,7 +7,7 @@ const deepMerge = require("./deep-merge");
 
 class BetterTorrentClient {
   constructor(options) {
-    const defaultPort = 6800;
+    const defaultPort = options.port || 6800;
     const defaults = {
       downloadDirectory: path.resolve("."),
       moveToDirectory: path.resolve("."),
