@@ -1,0 +1,23 @@
+{
+  "name": "better-torrent-client",
+  "version": "1.0.0",
+  "description": "A Better Client Because the other ones aren't maintained",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --trace-warnings index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "torrent",
+    "client",
+    "node",
+    "npm",
+    "magnet"
+  ],
+  "author": "CodingButter",
+  "license": "ISC",
+  "dependencies": {
+    "aria2": "^4.1.2",
+    "uid-generator": "^2.0.0"
+  }
+}
