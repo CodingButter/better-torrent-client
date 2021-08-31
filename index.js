@@ -90,16 +90,3 @@ class BetterTorrentClient {
     })[0];
   }
 }
-
-const magnetTorrent =
-  "magnet:?xt=urn:btih:1307346CE9EB49A36BC241A546720D53BBF2FFDC&dn=Black+Widow+%282021%29+%5B720p%5D+%5BYTS.MX%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2Fp4p.arenabg.ch%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce";
-const temp = new BetterTorrentClient({
-  aria2: { perameters: { "rpc-listen-port": 8001 } },
-});
-temp.connect().then(async () => {
-  const torrent = await temp.addTorrent(magnetTorrent, { id: 497698 });
-  await torrent.start();
-  setTimeout(async () => {
-    const info = await torrent.getInfo();
-  }, 15000);
-});
