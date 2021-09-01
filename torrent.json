@@ -1,0 +1,38 @@
+{
+  "bitfield": "c0",
+  "bittorrent": {
+    "announceList": [
+      ["udp://glotorrents.pw:6969/announce"],
+      ["udp://tracker.openbittorrent.com:80"],
+      ["udp://tracker.coppersurfer.tk:6969"],
+      ["udp://p4p.arenabg.ch:1337"],
+      ["udp://tracker.internetwarriors.net:1337"]
+    ]
+  },
+  "completedLength": "16976",
+  "connections": "0",
+  "dir": "C:\\Users\\Beast\\Desktop\\better-torrent-client",
+  "downloadSpeed": "0",
+  "errorCode": "0",
+  "errorMessage": "",
+  "files": [
+    {
+      "completedLength": "16976",
+      "index": "1",
+      "length": "16976",
+      "path": "[METADATA]Frozen+(2013)+[3D]+[YTS.MX]",
+      "selected": "true",
+      "uris": []
+    }
+  ],
+  "followedBy": ["0a9503aaa471a649"],
+  "gid": "72b15e42be8f1962",
+  "infoHash": "06c0d76d3b5ab230fcf2584fb381d529c6fabd2f",
+  "numPieces": "2",
+  "numSeeders": "0",
+  "pieceLength": "16384",
+  "status": "complete",
+  "totalLength": "16976",
+  "uploadLength": "0",
+  "uploadSpeed": "0"
+}
