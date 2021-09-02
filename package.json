@@ -1,6 +1,6 @@
 {
   "name": "better-torrent-client",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "A Better Client Because the other ones aren't maintained",
   "main": "index.js",
   "scripts": {

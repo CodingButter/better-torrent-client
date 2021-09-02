@@ -74,7 +74,9 @@ class BetterTorrentClient {
     const torrents = JSON.parse(fs.readFileSync(torrentList));
     return await Promise.all(
       torrents.map(async (torrent) => {
-        return await this.addTorrent(torrent.magnet, torrent);
+        const activeTorrent = await this.addTorrent(torrent.magnet, torrent);
+        activeTorrent.start();
+        return activeTorrent;
       })
     );
   }
