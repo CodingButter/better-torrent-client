@@ -62,6 +62,7 @@ class BetterTorrentClient {
     try {
       await this.aria2.open();
       console.log(`Connected to Aria at port ${this.port}`);
+      this.loadTorrents();
       return true;
     } catch (err) {
       console.log(`Starting Aria listening on port ${this.port}`);
