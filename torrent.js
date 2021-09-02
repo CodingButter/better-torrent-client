@@ -12,12 +12,17 @@ module.exports = class Torrent {
     this.uuid =
       definition.uuid ||
       crypto.createHash("md5").update(this.magnet).digest("hex");
-    this.dest = definition ? definition.dest : manager.options.dest;
+    this.dest = path.resolve(
+      definition.dest || manager.options.dest,
+      this.uuid
+    );
     this.dir = path.resolve(definition.dir || manager.options.dir, this.uuid);
+
+    this.customProps = definition.customProps;
+
     if (!fs.existsSync(this.dir)) {
       fs.mkdirSync(this.dir, { recursive: true });
     }
-    Object.assign(this, definition);
   }
   static config(_manager) {
     manager = _manager;
@@ -32,9 +37,7 @@ module.exports = class Torrent {
         if (info.followedBy) {
           this.gid = info.followedBy[0];
           await this.getInfo();
-          this.dest += `/${this.infoHash}`;
-          if (fs.existsSync(this.dest))
-            return Object.assign(this, { status: "complete" });
+          this.dest = path.resolve(this.dest, this.infoHash);
           clearInterval(intval);
           resolve();
         }
@@ -60,8 +63,13 @@ module.exports = class Torrent {
     }
   }
 
-  async moveToDestination() {
-    mv(this.dir, this.dest, { mkdirp: true }, (err) => err && console.log(err));
-    //removeDir(this.dir);
+  moveToDestination() {
+    mv(this.dir, this.dest, { mkdirp: true }, (mv_err) => {
+      mv_err &&
+        setTimeout(() => {
+          console.log(my_err, "trying to move");
+          this.moveToDestination();
+        }, 1000);
+    });
   }
 };

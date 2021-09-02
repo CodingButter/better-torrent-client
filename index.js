@@ -108,6 +108,7 @@ class BetterTorrentClient {
     this.aria2.on("onBtDownloadComplete", async (btcgid) => {
       const [{ gid }] = btcgid;
       const torrent = this.getTorrentById(gid);
+      console.log("Torrent Completed");
       await this.aria2.call("purgeDownloadResult");
       torrent.moveToDestination();
       this.remove(torrent);
@@ -123,17 +124,4 @@ class BetterTorrentClient {
   }
 }
 
-(async () => {
-  const btClient = new BetterTorrentClient({ port: 3001 });
-  const magnet =
-    "magnet:?xt=urn:btih:5FCFC76584E114282643694E5C8283C757DD4617&dn=WinRAR%205.71%20FINAL%20%2B%20Key%20%5BTheWindowsForum%5D&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2780%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2730%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce";
-  await btClient.connect();
-
-  const torrent = await btClient.addTorrent(magnet, {
-    uuid: "tt12312",
-    dest: "F:\\tt12312",
-  });
-
-  await torrent.start();
-  torrent.remove();
-})();
+module.exports = BetterTorrentClient;
