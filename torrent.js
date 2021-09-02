@@ -12,11 +12,8 @@ module.exports = class Torrent {
     this.uuid =
       definition.uuid ||
       crypto.createHash("md5").update(this.magnet).digest("hex");
-    this.dest = path.resolve(
-      definition.dest || manager.options.dest,
-      this.uuid
-    );
-    this.dir = path.resolve(definition.dir || manager.options.dir, this.uuid);
+    this.dest = path.join(definition.dest || manager.options.dest, this.uuid);
+    this.dir = path.join(definition.dir || manager.options.dir, this.uuid);
 
     this.include = definition.include;
 
@@ -37,7 +34,7 @@ module.exports = class Torrent {
         if (info.followedBy) {
           this.gid = info.followedBy[0];
           await this.getInfo();
-          this.dest = path.resolve(this.dest, this.infoHash);
+          this.dest = path.join(this.dest, this.infoHash);
           clearInterval(intval);
           resolve();
         }
