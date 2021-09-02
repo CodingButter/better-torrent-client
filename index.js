@@ -1,47 +1,6 @@
-/*
-[
-  'addUri',
-  'addTorrent',
-  'getPeers',
-  'addMetalink',
-  'remove',
-  'pause',
-  'forcePause',
-  'pauseAll',
-  'forcePauseAll',
-  'unpause',
-  'unpauseAll',
-  'forceRemove',
-  'changePosition',
-  'tellStatus',
-  'getUris',
-  'getFiles',
-  'getServers',
-  'tellActive',
-  'tellWaiting',
-  'tellStopped',
-  'getOption',
-  'changeUri',
-  'changeOption',
-  'getGlobalOption',
-  'changeGlobalOption',
-  'purgeDownloadResult',
-  'removeDownloadResult',
-  'getVersion',
-  'getSessionInfo',
-  'shutdown',
-  'forceShutdown',
-  'getGlobalStat',
-  'saveSession',
-  'system.multicall',
-  'system.listMethods',
-  'system.listNotifications'
-]
-*/
 const Aria2 = require("aria2");
 const Torrent = require("./torrent");
 const { spawn } = require("child_process");
-const fs = require("fs");
 const path = require("path");
 const deepMerge = require("./deep-merge");
 
@@ -49,8 +8,8 @@ class BetterTorrentClient {
   constructor(options) {
     const defaultPort = options.port || 6800;
     const defaults = {
-      downloadDirectory: path.resolve("."),
-      targetDirectory: path.resolve("."),
+      dir: path.resolve("."),
+      dest: path.resolve("."),
       aria2: {
         spawnOptions: {
           detached: true,
@@ -67,7 +26,7 @@ class BetterTorrentClient {
           "max-concurrent-downloads": 12,
           "max-overall-upload-limit": 0,
           "file-allocation": "none",
-          "bt-stop-timeout": 100,
+          "bt-stop-timeout": 60 * 5,
         },
       },
     };
@@ -115,21 +74,20 @@ class BetterTorrentClient {
   }
 
   async getInfo() {
-    const _self = this;
     return Promise.all(
       this.torrents.map(async (torrent) => {
-        const torrentInfo = await torrent.getInfo();
-        console.log({ torrentInfo });
-        if (torrentInfo.status == "removed") {
-          _self.remove(torrent);
-        }
+        return await torrent.getInfo();
       })
     );
   }
+
   async remove(torrent) {
-    await torrent.remove();
-    this.torrents.splice(this.torrents.indexOf(torrent), 1);
-    return torrent;
+    try {
+      this.torrents.splice(this.torrents.indexOf(torrent), 1);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error };
+    }
   }
 
   listTorrents() {
@@ -137,45 +95,45 @@ class BetterTorrentClient {
   }
 
   getTorrentById(uuid) {
-    return this.torrents.filter((torrent) => {
-      console.log(torrent.following);
-      return (
+    const torrent = this.torrents.find(
+      (torrent) =>
         torrent.uuid === uuid ||
         torrent.gid == uuid ||
-        (torrent.files &&
-          torrent.files.filter((file) => file.gid == uuid).length > 0) ||
-        (torrent && torrent.following == uuid)
-      );
-    })[0];
+        torrent.followedBy == [uuid]
+    );
+    return torrent;
   }
+  async onTorrentComplete(torrent) {}
   captureEvents() {
-    this.aria2.on("onBtDownloadComplete", async (gid) => {
+    this.aria2.on("onBtDownloadComplete", async (btcgid) => {
+      const [{ gid }] = btcgid;
+      const torrent = this.getTorrentById(gid);
       await this.aria2.call("purgeDownloadResult");
-      this.getTorrentById(gid).moveToDestination();
+      torrent.moveToDestination();
+      this.remove(torrent);
     });
 
-    this.aria2.on("onDownloadStop", async (gid) => {
+    this.aria2.on("onDownloadStop", async ([{ gid }]) => {
       console.log("torrent was Stopped");
+      await this.aria2.call("purgeDownloadResult");
       const torrent = this.getTorrentById(gid);
-      while (!torrent && torrent.following) {}
-      if (torrent && torrent.completedLength < torrent.totalLength) {
-        await _self.remove(torrent);
-      } else {
-        await this.aria2.call("purgeDownloadResult");
-        torrent.moveToDestination();
-      }
+      torrent.delete();
+      this.remove(torrent);
     });
   }
 }
 
-const btClient = new BetterTorrentClient({ port: 3001 });
-const magnet =
-  "magnet:?xt=urn:btih:06C0D76D3B5AB230FCF2584FB381D529C6FABD2F&dn=Frozen+%282013%29+%5B3D%5D+%5BYTS.MX%5D&tr=udp%3A%2F%2Fglotorrents.pw%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fp4p.arenabg.ch%3A1337&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337";
-btClient.connect().then(async () => {
-  console.log("connected");
+(async () => {
+  const btClient = new BetterTorrentClient({ port: 3001 });
+  const magnet =
+    "magnet:?xt=urn:btih:5FCFC76584E114282643694E5C8283C757DD4617&dn=WinRAR%205.71%20FINAL%20%2B%20Key%20%5BTheWindowsForum%5D&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2780%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2730%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce";
+  await btClient.connect();
+
   const torrent = await btClient.addTorrent(magnet, {
     uuid: "tt12312",
-    destinationDir: "F:\\tt12312",
+    dest: "F:\\tt12312",
   });
-  torrent.start();
-});
+
+  await torrent.start();
+  torrent.remove();
+})();

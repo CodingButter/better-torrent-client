@@ -1,9 +1,10 @@
 const path = require("path");
-const deepMerge = require("./deep-merge");
 const fs = require("fs");
 const rimraf = require("rimraf");
 const crypto = require("crypto");
-const { threadId } = require("worker_threads");
+const mv = require("mv");
+const { removeDir } = require("./utils");
+
 var manager, aria2;
 module.exports = class Torrent {
   constructor(magnet, definition = {}) {
@@ -11,15 +12,10 @@ module.exports = class Torrent {
     this.uuid =
       definition.uuid ||
       crypto.createHash("md5").update(this.magnet).digest("hex");
-    this.destinationDir = definition
-      ? definition.destinationDir
-      : manager.options.destinationDir;
-    this.dir = path.resolve(
-      definition.dir || manager.options.downloadDirectory,
-      this.uuid
-    );
+    this.dest = definition ? definition.dest : manager.options.dest;
+    this.dir = path.resolve(definition.dir || manager.options.dir, this.uuid);
     if (!fs.existsSync(this.dir)) {
-      fs.mkdirSync(this.dir);
+      fs.mkdirSync(this.dir, { recursive: true });
     }
     Object.assign(this, definition);
   }
@@ -28,15 +24,17 @@ module.exports = class Torrent {
     aria2 = _manager.aria2;
   }
   async start() {
-    const _self = this;
-    if (fs.existsSync(this.destinationDir))
-      return Object.assign(_self, { status: "complete" });
     this.gid = await aria2.call("addUri", [this.magnet], this);
 
-    await new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const intval = setInterval(async () => {
-        const info = await _self.getInfo();
+        const info = await this.getInfo();
         if (info.followedBy) {
+          this.gid = info.followedBy[0];
+          await this.getInfo();
+          this.dest += `/${this.infoHash}`;
+          if (fs.existsSync(this.dest))
+            return Object.assign(this, { status: "complete" });
           clearInterval(intval);
           resolve();
         }
@@ -44,30 +42,14 @@ module.exports = class Torrent {
     });
   }
 
-  deleteFiles() {
-    if (fs.existsSync(this.dir))
-      rimraf(this.dir, (err) => {
-        if (err) console.log({ rimraf_error: err });
-      });
+  delete() {
+    removeDir(this.dir);
   }
 
-  async remove(download) {
-    download = download || this;
-    if (download.files) {
-      await Promise.all(
-        download.files
-          .filter((file) => file.status == "active")
-          .map(async (file) => {
-            return await download.remove(file);
-          })
-      );
-    }
-    if (download.gid && download.status == "active")
-      await aria2.call("forceRemove", download.gid);
-    await aria2.call("purgeDownloadResult");
-    this.deleteFiles();
-    return "ok";
+  async remove() {
+    return await aria2.call("remove", this.gid);
   }
+
   async getInfo() {
     try {
       const info = await aria2.call("tellStatus", this.gid);
@@ -78,7 +60,8 @@ module.exports = class Torrent {
     }
   }
 
-  moveToDestination() {
-    fs.renameSync(this.dir, this.destinationDir);
+  async moveToDestination() {
+    mv(this.dir, this.dest, { mkdirp: true }, (err) => err && console.log(err));
+    //removeDir(this.dir);
   }
 };
