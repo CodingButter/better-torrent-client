@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const deepMerge = require("./deep-merge");
 const torrentList = path.join(path.resolve(__dirname), "torrentList.json");
+
 class BetterTorrentClient {
   constructor(options) {
     this.port = options.port || 6800;
@@ -72,7 +73,9 @@ class BetterTorrentClient {
   }
 
   async loadTorrents() {
-    const torrents = JSON.parse(fs.readFileSync(torrentList));
+    const torrents = fs.existsSync(torrentList)
+      ? JSON.parse(fs.readFileSync(torrentList))
+      : [];
     return await Promise.all(
       torrents.map(async (torrent) => {
         const activeTorrent = await this.addTorrent(torrent.magnet, torrent);
