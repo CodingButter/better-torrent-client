@@ -18,7 +18,7 @@ module.exports = class Torrent {
     );
     this.dir = path.resolve(definition.dir || manager.options.dir, this.uuid);
 
-    this.customProps = definition.customProps;
+    this.include = definition.include;
 
     if (!fs.existsSync(this.dir)) {
       fs.mkdirSync(this.dir, { recursive: true });
