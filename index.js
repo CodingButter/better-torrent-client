@@ -6,7 +6,7 @@ const deepMerge = require("./deep-merge");
 
 class BetterTorrentClient {
   constructor(options) {
-    const defaultPort = options.port || 6800;
+    this.port = options.port || 6800;
     const defaults = {
       dir: path.resolve("."),
       dest: path.resolve("."),
@@ -16,7 +16,7 @@ class BetterTorrentClient {
           shell: true,
         },
         perameters: {
-          "rpc-listen-port": `${defaultPort}`,
+          "rpc-listen-port": `${this.port}`,
           "always-resume": null,
           "enable-rpc": null,
           "rpc-listen-all": true,
@@ -48,7 +48,7 @@ class BetterTorrentClient {
       }
     );
     this.ariaProcess = spawn(
-      path.resolve("./bin/aria2c"),
+      path.resolve(`${__dirname}/bin/aria2c`),
       aria2Options,
       this.options.aria2.spawnOptions
     );
@@ -60,8 +60,11 @@ class BetterTorrentClient {
     });
     try {
       await this.aria2.open();
+
+      console.log(`Connected to Aria at port ${this.port}`);
       return true;
     } catch (err) {
+      console.log(`Starting Aria listening on port ${this.port}`);
       if (!this.ariaProcss) this._startAria2();
       return await this.connect();
     }
