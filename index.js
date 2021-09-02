@@ -2,8 +2,9 @@ const Aria2 = require("aria2");
 const Torrent = require("./torrent");
 const { spawn } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 const deepMerge = require("./deep-merge");
-
+const torrentList = path.join(path.resolve(__dirname), "torrentList.json");
 class BetterTorrentClient {
   constructor(options) {
     this.port = options.port || 6800;
@@ -60,7 +61,6 @@ class BetterTorrentClient {
     });
     try {
       await this.aria2.open();
-
       console.log(`Connected to Aria at port ${this.port}`);
       return true;
     } catch (err) {
@@ -70,9 +70,19 @@ class BetterTorrentClient {
     }
   }
 
+  async loadTorrents() {
+    const torrents = JSON.parse(fs.readFileSync(torrentList));
+    return await Promise.all(
+      torrents.map(async (torrent) => {
+        return await this.addTorrent(torrent.magnet, torrent);
+      })
+    );
+  }
+
   async addTorrent(magnetLink, options) {
     const torrent = new Torrent(magnetLink, options);
     this.torrents.push(torrent);
+    this.writeTorrents();
     return torrent;
   }
 
@@ -87,6 +97,7 @@ class BetterTorrentClient {
   async remove(torrent) {
     try {
       this.torrents.splice(this.torrents.indexOf(torrent), 1);
+      this.writeTorrents();
       return { success: true };
     } catch (error) {
       return { success: false, error };
@@ -95,6 +106,11 @@ class BetterTorrentClient {
 
   listTorrents() {
     return this.torrents;
+  }
+
+  writeTorrents() {
+    console.log("Updating Torrent List File");
+    fs.writeFileSync(torrentList, JSON.stringify(this.torrents));
   }
 
   getTorrentById(uuid) {
