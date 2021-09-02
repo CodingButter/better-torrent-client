@@ -3,6 +3,7 @@ const fs = require("fs");
 const rimraf = require("rimraf");
 const crypto = require("crypto");
 const mv = require("mv");
+const deepMerge = require("./deep-merge");
 const { removeDir } = require("./utils");
 
 var manager, aria2;
@@ -12,8 +13,11 @@ module.exports = class Torrent {
     this.uuid =
       definition.uuid ||
       crypto.createHash("md5").update(this.magnet).digest("hex");
-    this.dest = path.join(definition.dest || manager.options.dest, this.uuid);
-    this.dir = path.join(definition.dir || manager.options.dir, this.uuid);
+    this.dest = path.resolve(
+      definition.dest || manager.options.dest,
+      this.uuid
+    );
+    this.dir = path.resolve(definition.dir || manager.options.dir, this.uuid);
 
     this.include = definition.include;
 
@@ -34,7 +38,7 @@ module.exports = class Torrent {
         if (info.followedBy) {
           this.gid = info.followedBy[0];
           await this.getInfo();
-          this.dest = path.join(this.dest, this.infoHash);
+          this.dest = path.resolve(this.dest, this.infoHash);
           clearInterval(intval);
           resolve();
         }
@@ -64,7 +68,7 @@ module.exports = class Torrent {
     mv(this.dir, this.dest, { mkdirp: true }, (mv_err) => {
       mv_err &&
         setTimeout(() => {
-          console.log(my_err, "trying to move");
+          console.log("trying to move");
           this.moveToDestination();
         }, 1000);
     });
