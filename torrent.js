@@ -35,6 +35,7 @@ module.exports = class Torrent {
     return await new Promise((resolve, reject) => {
       const intval = setInterval(async () => {
         const info = await this.getInfo();
+        console.log("torrent.js", { info });
         if (info.followedBy) {
           this.gid = info.followedBy[0];
           await this.getInfo();

@@ -79,7 +79,7 @@ class BetterTorrentClient {
     return await Promise.all(
       torrents.map(async (torrent) => {
         const activeTorrent = await this.addTorrent(torrent.magnet, torrent);
-        activeTorrent.start();
+        await activeTorrent.start();
         return activeTorrent;
       })
     );
