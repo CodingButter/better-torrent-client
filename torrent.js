@@ -60,7 +60,7 @@ module.exports = class Torrent {
       Object.assign(this, info);
       return this;
     } catch (StatusError) {
-      return { status: "removed" };
+      return this;
     }
   }
 
